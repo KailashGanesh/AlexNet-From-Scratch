@@ -21,7 +21,7 @@ class AlexNetTorch(nn.Module):
             nn.MaxPool2d(kernel_size=3,stride=2)
         )
         self.layer3 = nn.Sequential(
-            nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, padding=1)
+            nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, padding=1),
             nn.ReLU(),
         )
         self.layer4 = nn.Sequential(
@@ -65,3 +65,5 @@ class AlexNetTorch(nn.Module):
         out = self.FC1(out)
         out = self.FC2(out)
         out = self.FC3(out)
+        
+        return out
