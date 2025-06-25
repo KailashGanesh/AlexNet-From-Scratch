@@ -20,6 +20,55 @@ else:
     device = torch.device("cpu")
     print("Using CPU for training")
 
+def save_checkpoint(model, optimizer, epoch, train_loss, val_loss, val_acc, is_best=False):
+    """Save model checkpoint"""
+    checkpoint = {
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'train_loss': train_loss,
+        'val_loss': val_loss,
+        'val_accuracy': val_acc,
+        'device': str(device)
+    }
+    
+    # Save regular checkpoint
+    checkpoint_path = f'models/checkpoint_epoch_{epoch}.pth'
+    torch.save(checkpoint, checkpoint_path)
+    print(f"Checkpoint saved: {checkpoint_path}")
+    
+    # Save best model separately
+    if is_best:
+        best_path = 'models/best_model.pth'
+        torch.save(checkpoint, best_path)
+        print(f"Best model saved: {best_path}")
+    
+    # Also save latest checkpoint
+    latest_path = 'models/latest_checkpoint.pth'
+    torch.save(checkpoint, latest_path)
+
+def load_checkpoint(model, optimizer, checkpoint_path):
+    """Load model checkpoint"""
+    if os.path.exists(checkpoint_path):
+        print(f"Loading checkpoint from {checkpoint_path}")
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        
+        start_epoch = checkpoint['epoch']
+        train_loss = checkpoint['train_loss']
+        val_loss = checkpoint['val_loss']
+        val_accuracy = checkpoint['val_accuracy']
+        
+        print(f"Resuming from epoch {start_epoch}")
+        print(f"Previous - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy:.2f}%")
+        
+        return start_epoch, train_loss, val_loss, val_accuracy
+    else:
+        print("No checkpoint found, starting from scratch")
+        return 0, 0, 0, 0
+
 def get_train_valid_loader(data_dir, batch_size, augment, random_seed, valid_size=0.1, shuffle=True):
     normalize = transforms.Normalize(
         mean=[0.4914, 0.4822, 0.4465],
@@ -159,15 +208,19 @@ model = AlexNetTorch(num_classes).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay = 0.005, momentum = 0.9)  
 
+# Try to load existing checkpoint
+start_epoch, prev_train_loss, prev_val_loss, prev_val_acc = load_checkpoint(model, optimizer, 'models/latest_checkpoint.pth')
+
 print("\nStarting training...")
 print(f"Training on device: {device}")
 print(f"Number of epochs: {num_epochs}")
 print(f"Batch size: {batch_size}")
 print(f"Learning rate: {learning_rate}")
+if start_epoch > 0:
+    print(f"Resuming from epoch {start_epoch + 1}")
 
 # Train the model
 total_step = len(train_loader)
-validation_frequency = 100  # Validate every 100 steps
 
 # Lists to store metrics for plotting
 train_losses = []
@@ -175,8 +228,12 @@ val_losses = []
 val_accuracies = []
 epochs = []
 
-# Create plots directory
+# Track best validation accuracy for saving best model
+best_val_accuracy = 0.0
+
+# Create plots and models directories
 os.makedirs('plots', exist_ok=True)
+os.makedirs('models', exist_ok=True)
 
 def save_training_plots(epoch, train_loss, val_loss, val_acc):
     """Save training plots after each epoch"""
@@ -211,11 +268,13 @@ def save_training_plots(epoch, train_loss, val_loss, val_acc):
     
     print(f"Training plots saved for epoch {epoch}")
 
-for epoch in range(num_epochs):
+for epoch in range(start_epoch, num_epochs):
     model.train()  # Set model to training mode
     running_loss = 0.0
     
-    for i, (images, labels) in enumerate(train_loader):  
+    # Training loop with progress bar
+    pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs}')
+    for i, (images, labels) in enumerate(pbar):  
         # Move tensors to the configured device
         images = images.to(device)
         labels = labels.to(device)
@@ -230,32 +289,9 @@ for epoch in range(num_epochs):
         optimizer.step()
         
         running_loss += loss.item()
-
-        # Validation during training
-        if (i + 1) % validation_frequency == 0:
-            model.eval()  # Set model to evaluation mode
-            val_loss = 0.0
-            correct = 0
-            total = 0
-            
-            with torch.no_grad():
-                for val_images, val_labels in valid_loader:
-                    val_images = val_images.to(device)
-                    val_labels = val_labels.to(device)
-                    val_outputs = model(val_images)
-                    val_loss += criterion(val_outputs, val_labels).item()
-                    _, predicted = torch.max(val_outputs.data, 1)
-                    total += val_labels.size(0)
-                    correct += (predicted == val_labels).sum().item()
-                    del val_images, val_labels, val_outputs
-            
-            avg_val_loss = val_loss / len(valid_loader)
-            val_accuracy = 100 * correct / total
-            
-            print('Epoch [{}/{}], Step [{}/{}], Train Loss: {:.4f}, Val Loss: {:.4f}, Val Acc: {:.2f}%'
-                  .format(epoch+1, num_epochs, i+1, total_step, loss.item(), avg_val_loss, val_accuracy))
-            
-            model.train()  # Set model back to training mode
+        
+        # Update progress bar with current loss
+        pbar.set_postfix({'Loss': f'{loss.item():.4f}'})
 
     # End of epoch validation
     model.eval()
@@ -263,7 +299,10 @@ for epoch in range(num_epochs):
         correct = 0
         total = 0
         val_loss = 0.0
-        for images, labels in valid_loader:
+        
+        # Validation loop with progress bar
+        val_pbar = tqdm(valid_loader, desc='Validation', leave=False)
+        for images, labels in val_pbar:
             images = images.to(device)
             labels = labels.to(device)
             outputs = model(images)
@@ -273,12 +312,31 @@ for epoch in range(num_epochs):
             correct += (predicted == labels).sum().item()
             del images, labels, outputs
 
+        avg_train_loss = running_loss / len(train_loader)
         avg_val_loss = val_loss / len(valid_loader)
-        print('Epoch [{}/{}] completed - Train Loss: {:.4f}, Val Loss: {:.4f}, Val Accuracy: {:.2f}%'
-              .format(epoch+1, num_epochs, running_loss/len(train_loader), avg_val_loss, 100 * correct / total))
+        current_val_accuracy = 100 * correct / total
+        
+        print(f'Epoch [{epoch+1}/{num_epochs}] - Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, Val Accuracy: {current_val_accuracy:.2f}%')
+
+    # Check if this is the best model so far
+    is_best = current_val_accuracy > best_val_accuracy
+    if is_best:
+        best_val_accuracy = current_val_accuracy
+        print(f"New best validation accuracy: {best_val_accuracy:.2f}%")
+
+    # Save checkpoint every epoch
+    save_checkpoint(
+        model=model,
+        optimizer=optimizer,
+        epoch=epoch + 1,
+        train_loss=avg_train_loss,
+        val_loss=avg_val_loss,
+        val_acc=current_val_accuracy,
+        is_best=is_best
+    )
 
     # Save training plots after each epoch
-    save_training_plots(epoch+1, running_loss/len(train_loader), avg_val_loss, 100 * correct / total)
+    save_training_plots(epoch+1, avg_train_loss, avg_val_loss, current_val_accuracy)
 
 # Final comprehensive plot
 def create_final_summary_plot():
@@ -342,3 +400,8 @@ Momentum: 0.9
 
 # Create final summary plot
 create_final_summary_plot()
+
+print(f"\nTraining completed!")
+print(f"Best validation accuracy achieved: {best_val_accuracy:.2f}%")
+print(f"All checkpoints saved in 'models/' directory")
+print(f"Training plots saved in 'plots/' directory")
