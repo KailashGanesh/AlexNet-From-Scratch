@@ -50,20 +50,31 @@ class AlexNetTorch(nn.Module):
         )
 
 
-    def forward(self, x):
+    def forward(self, x, visualize=False):
+        if visualize: all_layers = []
         # Conv Pass
         out = self.layer1(x)
+        if visualize: all_layers.append(out)
         out = self.layer2(out)
+        if visualize: all_layers.append(out)
         out = self.layer3(out)
+        if visualize: all_layers.append(out)
         out = self.layer4(out)
+        if visualize: all_layers.append(out)
         out = self.layer5(out)
+        if visualize: all_layers.append(out)
 
         # Flatten the output for fully connected layers
         out = out.view(out.size(0), -1)
 
         # Fully connected pass
         out = self.FC1(out)
+        if visualize: all_layers.append(out)
         out = self.FC2(out)
+        if visualize: all_layers.append(out)
         out = self.FC3(out)
+        if visualize: all_layers.append(out)
         
+        if visualize:
+            return out, all_layers
         return out
