@@ -3,8 +3,9 @@ RUN apt-get update && apt-get install -y curl zlib1g-dev --no-install-recommends
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir gdown
 RUN mkdir -p /app/models && \
-    curl -L -o /app/models/best_model.pth "https://drive.google.com/uc?export=download&id=1bTpFE5yqvxwHuq5jfegSoTp9dP4lmB7j"
+    gdown --id 1bTpFE5yqvxwHuq5jfegSoTp9dP4lmB7j --output /app/models/best_model.pth
 COPY . .
 EXPOSE 3000
 CMD ["python", "server.py"]

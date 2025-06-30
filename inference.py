@@ -28,7 +28,7 @@ def setup_device():
     return device
 
 def load_model(model_path = './models/best_model.pth', num_classes = 10, device = None):
-    full_state_dict = torch.load(model_path, map_location=device)
+    full_state_dict = torch.load(model_path, map_location=device, weights_only=False)
     model_state_dict = full_state_dict.get('model_state_dict', full_state_dict)
     model = AlexNetTorch(num_classes=num_classes)
 
