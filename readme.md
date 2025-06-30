@@ -38,6 +38,12 @@ docker run -p 3000:3000 alexnet-app
     pip install -r requirements.txt
     ```
 4.  **Train the model:**
+
+    if running on Mac with apple silicon use `PYTORCH_ENABLE_MPS_FALLBACK=1` since the original AlexNet implementation uses `nn.AdaptiveAvgPool2d` which is not supported on MPS backend.
+    ```bash
+    export PYTORCH_ENABLE_MPS_FALLBACK=1
+    ```
+
     ```bash
     python train.py
     ```
