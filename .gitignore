@@ -1,6 +1,6 @@
 __pycache__/
 data/
-models/best_model.pth
+models/
 static/
 uploads/
 .DS_Store
