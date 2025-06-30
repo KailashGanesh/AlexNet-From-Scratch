@@ -51,7 +51,7 @@ docker run -p 3000:3000 alexnet-app
 
 6.  **Run inference from the command line:**
     ```bash
-    python inference.py --image <path_to_your_image>
+    python inference.py <path_to_your_image>
     ```
 ## Training Summary
 
