@@ -20,10 +20,10 @@
     cd AlexNet-From-Scratch
     ```
 2.  **Build Image & Run Docker**
-```bash
-docker build -t alexnet-app .
-docker run -p 3000:3000 alexnet-app
-```
+    ```bash
+    docker build -t alexnet-app .
+    docker run -p 3000:3000 alexnet-app
+    ```
 ### Installation and Usage (Local)
 
 1.  **Clone the repository:**
@@ -68,3 +68,4 @@ docker run -p 3000:3000 alexnet-app
 - [AlexNet Paper](https://proceedings.neurips.cc/paper/2012/file/c399862d3b9d6b76c8436e924a68c45b-Paper.pdf)
 - [Writing AlexNet from Scratch in PyTorch](https://www.digitalocean.com/community/tutorials/alexnet-pytorch)
 - [Constructing Neural Networks from Scratch](https://www.digitalocean.com/community/tutorials/constructing-neural-networks-from-scratch)
+- Main Inspiration: [The Moment we stopped understanding Ai [AlexNet]](https://youtu.be/UZDiGooFs54)
