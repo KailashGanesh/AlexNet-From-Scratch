@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlexNet from Scratch</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            font-family: "Roboto", Arial, Helvetica, sans-serif;
+            background-color: #fff;
+            margin: 0;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+
+        h1, h2, h3 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        form button{
+            cursor: pointer;
+            max-width: 85px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AlexNet from Scratch</h1>
+        <p>This is a simple implementation of AlexNet from scratch using PyTorch.</p>
+
+        <form id="form" method="POST" action="/predict" enctype="multipart/form-data">
+            <label for="input">Upload an Image</label>
+            <input type="file" id="input" name="image" accept="image/*" required>
+            <button type="submit">Submit</button>
+        </form>
+
+        <div id="output">
+            {% if error %}
+                <p style="color: red;">Error: {{ error }}</p>
+            {% elif success %}
+                <p><b>File Name:</b> {{ file_name }}</p>
+                <p><b>Prediction:</b> {{ predicted_class }}</p>
+                <p><b>Confidence:</b> {{ "%.2f"|format(confidence) }}</p>
+            {% endif %}
+
+            <div id="visualization">
+                {% if all_layers %}
+                    <h2>Layer Visualizations</h2>
+                    {% for layer in all_layers %}
+                        <img src="{{ layer }}" alt="Layer Visualization">
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+        images = document.querySelectorAll('#visualization img');
+        images.forEach(img => {
+            img.addEventListener('click', () => {
+                const newTab = window.open();
+                if (newTab) {
+                    newTab.document.body.innerHTML = `<img src="${img.src}" alt="Layer Visualization">`;
+                }
+            });
+        })
+    </script>
+</body>
+</html>
