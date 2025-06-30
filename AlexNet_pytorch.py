@@ -51,7 +51,8 @@ class AlexNetTorch(nn.Module):
 
 
     def forward(self, x, visualize=False):
-        if visualize: all_layers = []
+        all_layers = []
+
         # Conv Pass
         out = self.layer1(x)
         if visualize: all_layers.append(out)
