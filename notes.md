@@ -2,9 +2,9 @@
 
 These are raw learning notes, not polished
 
-## AlexNet spefics:
+## AlexNet specifics:
 - total 8 layers
-- first 5 layers convalutions
+- first 5 layers convolutions
     - Conv
     - RelU - non-linearity is applied to the output of every convolutional and fully-connected layer 
     - Max pooling layers - 3x3 kernal 2 pixels apart
@@ -25,7 +25,7 @@ These are raw learning notes, not polished
         - Dropouts
         - ReLU
     - FC 2
-        - The output of the last fully-connected layer is fed to a 1000-way softmax (?) which produces a distribution over the 1000 class labels (this is because the orginal paper had 1000 lables to classify)
+        - The output of the last fully-connected layer is fed to a 1000-way softmax (?) which produces a distribution over the 1000 class labels (this is because the orginal paper had 1000 labels to classify)
 
 ## 1. ReLU Activation Function
 I'm learning about ReLU activation function, I used to be intimidated by it because of the math symbols, but now it's just two if statements?!?!
@@ -58,9 +58,7 @@ Okay now that I actually wrote the formula, it's actually not so scary.
 
 This helps keep the model non-linear and prevents eliminating vanishing gradient problem.
 
-man, I'm never going to avoid looking under the hood - things are simpler then they seem most of the time
-
-and I want to petition for all math to be writting in python code
+man, I'm never going to avoid looking under the hood - things are simpler then they seem most of the time and I want to petition for all math to be written in python code
 
 ## 2. Convolutions
 What is a Convolution and why is it useful?
@@ -78,12 +76,12 @@ now, the AlexNet code in [^4] is starting to make sense
 
 things I need to learn about:
 - [x] Dropout
-- [ ] nn.linear
-- [ ] nn.BatchNorm2d
-- [ ] nn.Sequential
-- [ ] nn.conv2d()
-- [ ] super(AlexNet, self).__init__()
-- [ ] what is a softmax?
+- [x] nn.linear
+- [x] nn.BatchNorm2d
+- [x] nn.Sequential
+- [x] nn.conv2d()
+- [x] super(AlexNet, self).__init__()
+- [x] what is a softmax?
 
 
 ## Dropout
@@ -110,16 +108,13 @@ it's pytorch's way of making dense connections
 > This transformation is represented by the formula y = xA^T + b, where x is the input, A is the weight, b is the bias, and y is the output. [^3]
 
 but why is no one talking about the `T`
-thanks to gemini - the `T` turns out to stand for transposing and pytorch takes care of this for you
+thanks to Gemini - the `T` turns out to stand for transposing and pytorch takes care of this for you
 
 torch.nn.Linear(in_features, out_features, bias=True, device=None, dtype=None)
 Parameters
 - in_features (int) – size of each input sample
 - out_features (int) – size of each output sample
 - bias (bool) – If set to False, the layer will not learn an additive bias. Default: True
-
-
-you can also use ____ function
 
 ## nn.BatchNorm2d
 
@@ -170,8 +165,8 @@ torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0)
     padding (int): Adds a border of zeros around the wall. This lets your flashlight check the very edges of the image properly and gives you control over the output size.
 
 ## super(AlexNet, self).__init__()
-I should have known this, but I'm not super femilear with OOP, so that's the thing I want to get good at next
-I have forgottn it, since I last learned it in javascript, it seems like - haven't really used it after learning it
+I should have known this, but I'm not super familiar with OOP, so that's the thing I want to get good at next
+I have forgotten it, since I last learned it in JavaScript, it seems like - haven't really used it after learning it
 
 When you create a child class, you must first properly initialize the parent class it's based on.
 super().__init__() does exactly that. It runs the original __init__ method from the parent nn.Module. This sets up all the critical background machinery that allows PyTorch to track your layers, manage parameters, move the model to a GPU, etc.
@@ -200,6 +195,23 @@ ugh I wanted to have a faithful rebuild of AlexNet, using the same methods from 
 but I get this when I try to train on my M1 Mac:
 
 > NotImplementedError: The operator 'aten::avg_pool3d.out' is not currently implemented for the MPS device. If you want this op to be considered for addition please comment on https://github.com/pytorch/pytorch/issues/141287 and mention use-case, that resulted in missing op as well as commit hash e2d141dbde55c2a4370fac5165b0561b6af4798b. As a temporary fix, you can set the environment variable `PYTORCH_ENABLE_MPS_FALLBACK=1` to use the CPU as a fallback for this op. WARNING: this will be slower than running natively on MPS.
+
+Training on mac is slower because of this, but it will do I guess
+
+### Input dimensions and the conv formula
+
+Since I just used the AlexNet paper as reference, I didn't need to calculate the next layer's size - here's the formula anyway
+
+output = (input - kernel size + 2 * Padding) / Stride + 1
+
+### Local Response Norm vs BatchNorm
+
+- Local Response Norm:
+- Batch Normalization:
+
+
+
+
 
 ## References
 [^1]: https://www.digitalocean.com/community/tutorials/relu-function-in-python
